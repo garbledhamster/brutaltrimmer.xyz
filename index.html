@@ -7,7 +7,15 @@
   <title>Text Processor</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-F5XYNEJHS6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
+  gtag('config', 'G-F5XYNEJHS6');
+</script>
 <body class="bg-white text-black m-0 font-mono">
   <div id="container" class="flex flex-col items-center justify-center h-screen p-8 box-border">
     <textarea id="inputText" placeholder="Enter text here..." oninput="processText()" class="w-4/5 h-2/5 m-2 p-2 border-2 border-black resize-none outline-none overflow-x-hidden whitespace-pre-wrap"></textarea>
