@@ -1,1 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Text Processor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-white text-black m-0 font-mono">
+  <div id="container" class="flex flex-col items-center justify-center h-screen p-8 box-border">
+    <textarea id="inputText" placeholder="Enter text here..." oninput="processText()" class="w-4/5 h-2/5 m-2 p-2 border-2 border-black resize-none outline-none overflow-x-hidden whitespace-pre-wrap"></textarea>
+    <textarea id="outputText" placeholder="Processed text will appear here..." readonly class="w-4/5 h-2/5 m-2 p-2 border-2 border-black resize-none outline-none overflow-x-hidden whitespace-pre-wrap"></textarea>
+    <div id="controls" class="flex flex-col items-start justify-center text-left m-2">
+      <label class="m-0.5">
+        <input type="checkbox" id="specialCharacters" onchange="processText()" class="mr-2">
+        Multiple Special Character Reduction
+      </label>
+      <label class="m-0.5">
+        <input type="checkbox" id="wordmap" onchange="processText()" class="mr-2">
+        Wordmap
+      </label>
+      <label class="m-0.5 flex items-center">
+        <input type="checkbox" id="removeVowels" onchange="processText()" class="mr-2">
+        Remove Vowels
+        <label class="ml-2 flex items-center">
+          <input type="checkbox" id="removeVowelsCapitals" onchange="processText()" class="mr-2">
+          (include capitals)
+        </label>
+      </label>
+      <label class="m-0.5">
+        <input type="checkbox" id="removeSpaces" onchange="processText()" class="mr-2">
+        Remove Spaces
+      </label>
+      <label class="m-0.5">
+        <input type="checkbox" id="fillerWords" onchange="processText()" class="mr-2">
+        Filler Words
+      </label>
+      <label class="m-0.5">
+        <input type="checkbox" id="removeLineBreaks" onchange="processText()" class="mr-2">
+        Remove Line Breaks
+      </label>
+      <label class="m-0.5">
+        <input type="checkbox" id="removeSingleLineComments" onchange="processText()" class="mr-2">
+        Remove Single-Line Comments (e.g., //, #)
+      </label>
+      <label class="m-0.5">
+        <input type="checkbox" id="removeBlockComments" onchange="processText()" class="mr-2">
+        Remove Block Comments (e.g., /* */)
+      </label>
+      <label class="m-0.5">
+        <input type="checkbox" id="removeHTMLComments" onchange="processText()" class="mr-2">
+        Remove HTML/XML Comments (<!-- -->)
+      </label>
+    </div>
+    <div id="charCount" class="text-center font-mono w-full mt-4">
+      Original: 0 characters, Cleaned: 0 characters, Outputbox: 0 characters
+    </div>
+  </div>
+  <script>
+    window.onload = function () {
+      document.getElementById("inputText").addEventListener("input", processText);
+    };
+
+    function processText() {
+      var inputText = document.getElementById("inputText").value;
+      var outputText = inputText;
+
+      if (document.getElementById("specialCharacters").checked) {
+        outputText = handleSpecialCharacters(outputText);
+      }
+      if (document.getElementById("wordmap").checked) {
+        outputText = applyWordMap(outputText);
+      }
+      if (document.getElementById("removeVowels").checked) {
+        if (document.getElementById("removeVowelsCapitals").checked) {
+          outputText = outputText.replace(/[aeiou]/gi, "");
+        } else {
+          outputText = outputText.replace(/[aeiou]/g, "");
+        }
+      }
+      if (document.getElementById("removeSpaces").checked) {
+        outputText = outputText.replace(/\u0020/g, "");
+      }
+      if (document.getElementById("removeLineBreaks").checked) {
+        outputText = outputText.replace(/\r?\n|\r/g, "");
+      }
+      if (document.getElementById("fillerWords").checked) {
+        outputText = removeFillerWords(outputText);
+      }
+      if (document.getElementById("removeSingleLineComments").checked) {
+        outputText = removeSingleLineComments(outputText);
+      }
+      if (document.getElementById("removeBlockComments").checked) {
+        outputText = removeBlockComments(outputText);
+      }
+      if (document.getElementById("removeHTMLComments").checked) {
+        outputText = removeHTMLComments(outputText);
+      }
+
+      document.getElementById("outputText").value = outputText;
+      document.getElementById("charCount").textContent = `Original: ${
+        inputText.length
+      } characters, Cleaned: ${
+        inputText.length - outputText.length
+      } characters, Outputbox: ${outputText.length} characters`;
+    }
+
+    function handleSpecialCharacters(text) {
+      var specialCharacters = [
+        "-", "—", "&", "_", ",", ".", "!", "?", ":", ";",
+        "(", ")", "[", "]", "{", "}", '"', "'"
+      ];
+      specialCharacters.forEach((char) => {
+        let regex = new RegExp(`[${char}]+`, "g");
+        text = text.replace(regex, char);
+      });
+      return text;
+    }
+
+    function applyWordMap(text) {
+      var wordMap = {
+        about: "abt",
+        after: "aftr",
+        algorithm: "algo",
+        all: "al",
+        before: "b4",
+        between: "btwn",
+        communication: "comm",
+        development: "dev",
+        example: "ex",
+        information: "info",
+        international: "intl",
+        organization: "org",
+        people: "ppl",
+        problem: "prblm",
+        professional: "prof",
+        system: "sys",
+        technology: "tech",
+        understand: "undrstd",
+        without: "w/o",
+        one: "1",
+        two: "2",
+        three: "3",
+        four: "4",
+        five: "5",
+        six: "6",
+        seven: "7",
+        eight: "8",
+        nine: "9",
+        zero: "0"
+      };
+      return text
+        .split(/\r?\n|\r/)
+        .map((paragraph) =>
+          paragraph
+          .split(/\s+/)
+          .map((word) => wordMap[word.toLowerCase()] || word)
+          .join(" ")
+        )
+        .join("\n");
+    }
+
+    function removeFillerWords(text) {
+      var fillerWords = [
+        "basically", "actually", "honestly", "literally", "essentially",
+        "frankly", "definitely", "probably", "maybe", "like", "just",
+        "really", "very", "so", "quite", "somewhat", "rather", "almost",
+        "approximately", "around", "nearly", "practically", "virtually",
+        "sort of", "kind of", "more or less", "mostly",
+      ];
+      return text
+        .split(/\r?\n|\r/)
+        .map((paragraph) =>
+          paragraph
+          .split(/\s+/)
+          .filter((word) => !fillerWords.includes(word.toLowerCase()))
+          .join(" ")
+        )
+        .join("\n");
+    }
+
+    function removeSingleLineComments(text) {
+      // Remove // comments
+      text = text.replace(/\/\/.*$/gm, "");
+      // Remove # comments
+      text = text.replace(/#.*$/gm, "");
+      return text;
+    }
+
+    function removeBlockComments(text) {
+      // Remove /* */ comments
+      return text.replace(/\/\*[\s\S]*?\*\//g, "");
+    }
+
+    function removeHTMLComments(text) {
+      // Remove <!-- --> comments
+      return text.replace(/<!--[\s\S]*?-->/g, "");
+    }
+  </script>
+</body>
+
+</html>
