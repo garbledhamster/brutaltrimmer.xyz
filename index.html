@@ -11,55 +11,63 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-F5XYNEJHS6"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag('js', new Date());
   gtag('config', 'G-F5XYNEJHS6');
 </script>
+
 <body class="bg-white text-black m-0 font-mono">
   <div id="container" class="flex flex-col items-center justify-center h-screen p-8 box-border">
-    <textarea id="inputText" placeholder="Enter text here..." oninput="processText()" class="w-4/5 h-2/5 m-2 p-2 border-2 border-black resize-none outline-none overflow-x-hidden whitespace-pre-wrap"></textarea>
+    <textarea id="inputText" placeholder="Enter text here..." class="w-4/5 h-2/5 m-2 p-2 border-2 border-black resize-none outline-none overflow-x-hidden whitespace-pre-wrap"></textarea>
     <textarea id="outputText" placeholder="Processed text will appear here..." readonly class="w-4/5 h-2/5 m-2 p-2 border-2 border-black resize-none outline-none overflow-x-hidden whitespace-pre-wrap"></textarea>
-    <div id="controls" class="flex flex-col items-start justify-center text-left m-2">
+    <div id="controls" class="flex flex-col items-start justify-center text-left m-2 w-4/5">
       <label class="m-0.5">
-        <input type="checkbox" id="specialCharacters" onchange="processText()" class="mr-2">
+        <input type="checkbox" id="specialCharacters" class="mr-2">
         Multiple Special Character Reduction
       </label>
       <label class="m-0.5">
-        <input type="checkbox" id="wordmap" onchange="processText()" class="mr-2">
+        <input type="checkbox" id="wordmap" class="mr-2">
         Wordmap
       </label>
       <label class="m-0.5 flex items-center">
-        <input type="checkbox" id="removeVowels" onchange="processText()" class="mr-2">
+        <input type="checkbox" id="removeVowels" class="mr-2">
         Remove Vowels
         <label class="ml-2 flex items-center">
-          <input type="checkbox" id="removeVowelsCapitals" onchange="processText()" class="mr-2">
+          <input type="checkbox" id="removeVowelsCapitals" class="mr-2">
           (include capitals)
         </label>
       </label>
       <label class="m-0.5">
-        <input type="checkbox" id="removeSpaces" onchange="processText()" class="mr-2">
+        <input type="checkbox" id="removeSpaces" class="mr-2">
         Remove Spaces
       </label>
       <label class="m-0.5">
-        <input type="checkbox" id="fillerWords" onchange="processText()" class="mr-2">
+        <input type="checkbox" id="fillerWords" class="mr-2">
         Filler Words
       </label>
       <label class="m-0.5">
-        <input type="checkbox" id="removeLineBreaks" onchange="processText()" class="mr-2">
+        <input type="checkbox" id="removeLineBreaks" class="mr-2">
         Remove Line Breaks
       </label>
+      <!-- Separate Checkboxes for Each Comment Type with Escaped Characters -->
       <label class="m-0.5">
-        <input type="checkbox" id="removeSingleLineComments" onchange="processText()" class="mr-2">
-        Remove Single-Line Comments (e.g., //, #)
+        <input type="checkbox" id="removeDoubleSlashComments" class="mr-2">
+        Remove <code>//</code> Single-Line Comments
       </label>
       <label class="m-0.5">
-        <input type="checkbox" id="removeBlockComments" onchange="processText()" class="mr-2">
-        Remove Block Comments (e.g., /* */)
+        <input type="checkbox" id="removeHashComments" class="mr-2">
+        Remove <code>#</code> Single-Line Comments
       </label>
       <label class="m-0.5">
-        <input type="checkbox" id="removeHTMLComments" onchange="processText()" class="mr-2">
-        Remove HTML/XML Comments (<!-- -->)
+        <input type="checkbox" id="removeBlockComments" class="mr-2">
+        Remove <code>/* */</code> Block Comments
+      </label>
+      <label class="m-0.5">
+        <input type="checkbox" id="removeHTMLComments" class="mr-2">
+        Remove <code>&lt;!-- --&gt;</code> HTML/XML Comments
       </label>
     </div>
     <div id="charCount" class="text-center font-mono w-full mt-4">
@@ -67,68 +75,127 @@
     </div>
   </div>
   <script>
-    window.onload = function () {
-      document.getElementById("inputText").addEventListener("input", processText);
+    // Debounce utility to limit the rate at which a function can fire.
+    function debounce(func, delay) {
+      let debounceTimeout;
+      return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => func.apply(context, args), delay);
+      };
+    }
+    // Event handler with debouncing to optimize performance
+    const processTextDebounced = debounce(processText, 300); // 300ms delay
+    // Initialize event listeners on window load
+    window.onload = function() {
+      const inputElement = document.getElementById("inputText");
+      const outputElement = document.getElementById("outputText");
+      const charCountElement = document.getElementById("charCount");
+      if (inputElement && outputElement && charCountElement) {
+        inputElement.addEventListener("input", processTextDebounced);
+        // Attach change event listeners to all checkboxes to reprocess text on option change
+        const checkboxes = document.querySelectorAll("#controls input[type='checkbox']");
+        checkboxes.forEach(checkbox => {
+          checkbox.addEventListener("change", processTextDebounced);
+        });
+      } else {
+        console.error("One or more required DOM elements are missing.");
+      }
     };
-
+    // Main text processing function with comprehensive error handling
     function processText() {
-      var inputText = document.getElementById("inputText").value;
-      var outputText = inputText;
-
-      if (document.getElementById("specialCharacters").checked) {
-        outputText = handleSpecialCharacters(outputText);
-      }
-      if (document.getElementById("wordmap").checked) {
-        outputText = applyWordMap(outputText);
-      }
-      if (document.getElementById("removeVowels").checked) {
-        if (document.getElementById("removeVowelsCapitals").checked) {
-          outputText = outputText.replace(/[aeiou]/gi, "");
-        } else {
-          outputText = outputText.replace(/[aeiou]/g, "");
+      try {
+        const inputElement = document.getElementById("inputText");
+        const outputElement = document.getElementById("outputText");
+        const charCountElement = document.getElementById("charCount");
+        if (!inputElement || !outputElement || !charCountElement) {
+          throw new Error("Required DOM elements are missing.");
+        }
+        const inputText = inputElement.value;
+        let outputText = inputText;
+        // Apply transformations based on selected options
+        if (document.getElementById("specialCharacters").checked) {
+          if (typeof handleSpecialCharacters === "function") {
+            outputText = handleSpecialCharacters(outputText);
+          } else {
+            console.warn("handleSpecialCharacters function is not defined.");
+          }
+        }
+        if (document.getElementById("wordmap").checked) {
+          if (typeof applyWordMap === "function") {
+            outputText = applyWordMap(outputText);
+          } else {
+            console.warn("applyWordMap function is not defined.");
+          }
+        }
+        if (document.getElementById("removeVowels").checked) {
+          if (document.getElementById("removeVowelsCapitals").checked) {
+            outputText = outputText.replace(/[aeiou]/gi, "");
+          } else {
+            outputText = outputText.replace(/[aeiou]/g, "");
+          }
+        }
+        if (document.getElementById("removeSpaces").checked) {
+          outputText = outputText.replace(/\u0020/g, "");
+        }
+        if (document.getElementById("removeLineBreaks").checked) {
+          outputText = outputText.replace(/\r?\n|\r/g, "");
+        }
+        if (document.getElementById("fillerWords").checked) {
+          if (typeof removeFillerWords === "function") {
+            outputText = removeFillerWords(outputText);
+          } else {
+            console.warn("removeFillerWords function is not defined.");
+          }
+        }
+        // Remove Comments Based on Separate Checkboxes
+        if (document.getElementById("removeDoubleSlashComments").checked) {
+          outputText = removeComments(outputText, "//");
+        }
+        if (document.getElementById("removeHashComments").checked) {
+          outputText = removeComments(outputText, "#");
+        }
+        if (document.getElementById("removeBlockComments").checked) {
+          outputText = removeBlockComments(outputText);
+        }
+        if (document.getElementById("removeHTMLComments").checked) {
+          outputText = removeHTMLComments(outputText);
+        }
+        // Update the output textarea and character count
+        outputElement.value = outputText;
+        charCountElement.textContent = `Original: ${inputText.length} characters, Cleaned: ${inputText.length - outputText.length} characters, Outputbox: ${outputText.length} characters`;
+      } catch (error) {
+        console.error("Error processing text:", error);
+        const outputElement = document.getElementById("outputText");
+        const charCountElement = document.getElementById("charCount");
+        if (outputElement && charCountElement) {
+          outputElement.value = "An error occurred while processing the text.";
+          charCountElement.textContent = `Original: ${document.getElementById("inputText")?.value.length || 0} characters, Cleaned: N/A, Outputbox: N/A`;
         }
       }
-      if (document.getElementById("removeSpaces").checked) {
-        outputText = outputText.replace(/\u0020/g, "");
-      }
-      if (document.getElementById("removeLineBreaks").checked) {
-        outputText = outputText.replace(/\r?\n|\r/g, "");
-      }
-      if (document.getElementById("fillerWords").checked) {
-        outputText = removeFillerWords(outputText);
-      }
-      if (document.getElementById("removeSingleLineComments").checked) {
-        outputText = removeSingleLineComments(outputText);
-      }
-      if (document.getElementById("removeBlockComments").checked) {
-        outputText = removeBlockComments(outputText);
-      }
-      if (document.getElementById("removeHTMLComments").checked) {
-        outputText = removeHTMLComments(outputText);
-      }
-
-      document.getElementById("outputText").value = outputText;
-      document.getElementById("charCount").textContent = `Original: ${
-        inputText.length
-      } characters, Cleaned: ${
-        inputText.length - outputText.length
-      } characters, Outputbox: ${outputText.length} characters`;
     }
-
+    // Function to handle multiple special character reductions
     function handleSpecialCharacters(text) {
-      var specialCharacters = [
+      const specialCharacters = [
         "-", "—", "&", "_", ",", ".", "!", "?", ":", ";",
         "(", ")", "[", "]", "{", "}", '"', "'"
       ];
       specialCharacters.forEach((char) => {
-        let regex = new RegExp(`[${char}]+`, "g");
+        // Escape special regex characters
+        const escapedChar = escapeRegExp(char);
+        const regex = new RegExp(`[${escapedChar}]+`, "g");
         text = text.replace(regex, char);
       });
       return text;
     }
-
+    // Utility function to escape special regex characters
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    // Function to apply word mapping for abbreviations
     function applyWordMap(text) {
-      var wordMap = {
+      const wordMap = {
         about: "abt",
         after: "aftr",
         algorithm: "algo",
@@ -159,52 +226,170 @@
         nine: "9",
         zero: "0"
       };
-      return text
-        .split(/\r?\n|\r/)
-        .map((paragraph) =>
-          paragraph
-          .split(/\s+/)
-          .map((word) => wordMap[word.toLowerCase()] || word)
-          .join(" ")
-        )
-        .join("\n");
+      // Use word boundaries to ensure whole words are matched
+      const regex = new RegExp(`\\b(${Object.keys(wordMap).join("|")})\\b`, "gi");
+      return text.replace(regex, (matched) => wordMap[matched.toLowerCase()] || matched);
     }
-
+    // Function to remove filler words from text
     function removeFillerWords(text) {
-      var fillerWords = [
+      const fillerWords = [
         "basically", "actually", "honestly", "literally", "essentially",
         "frankly", "definitely", "probably", "maybe", "like", "just",
         "really", "very", "so", "quite", "somewhat", "rather", "almost",
         "approximately", "around", "nearly", "practically", "virtually",
         "sort of", "kind of", "more or less", "mostly",
       ];
-      return text
-        .split(/\r?\n|\r/)
-        .map((paragraph) =>
-          paragraph
-          .split(/\s+/)
-          .filter((word) => !fillerWords.includes(word.toLowerCase()))
-          .join(" ")
-        )
-        .join("\n");
+      // Use word boundaries and case-insensitive matching
+      const regex = new RegExp(`\\b(${fillerWords.join("|")})\\b`, "gi");
+      return text.replace(regex, "").replace(/\s{2,}/g, " ").trim();
     }
-
-    function removeSingleLineComments(text) {
-      // Remove // comments
-      text = text.replace(/\/\/.*$/gm, "");
-      // Remove # comments
-      text = text.replace(/#.*$/gm, "");
-      return text;
+    // Function to remove comments outside of quotes
+    function removeComments(text, type) {
+      const result = [];
+      let inSingleQuote = false;
+      let inDoubleQuote = false;
+      let inBacktick = false;
+      let i = 0;
+      while (i < text.length) {
+        const char = text[i];
+        const nextTwo = text.substr(i, 2);
+        const nextHash = text[i] === '#' ? '#' : null;
+        // Toggle quote states
+        if (char === "'" && !inDoubleQuote && !inBacktick) {
+          inSingleQuote = !inSingleQuote;
+          result.push(char);
+          i++;
+          continue;
+        }
+        if (char === '"' && !inSingleQuote && !inBacktick) {
+          inDoubleQuote = !inDoubleQuote;
+          result.push(char);
+          i++;
+          continue;
+        }
+        if (char === '`' && !inSingleQuote && !inDoubleQuote) {
+          inBacktick = !inBacktick;
+          result.push(char);
+          i++;
+          continue;
+        }
+        // If not inside any quotes, check for comment patterns
+        if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
+          if (type === "//" && nextTwo === "//") {
+            // Skip until end of line
+            while (i < text.length && text[i] !== '\n') {
+              i++;
+            }
+            continue;
+          }
+          if (type === "#" && char === '#') {
+            // Skip until end of line
+            while (i < text.length && text[i] !== '\n') {
+              i++;
+            }
+            continue;
+          }
+        }
+        // Otherwise, add the character to the result
+        result.push(char);
+        i++;
+      }
+      return result.join('');
     }
-
+    // Function to remove block comments (/* */) outside of quotes
     function removeBlockComments(text) {
-      // Remove /* */ comments
-      return text.replace(/\/\*[\s\S]*?\*\//g, "");
+      const result = [];
+      let inSingleQuote = false;
+      let inDoubleQuote = false;
+      let inBacktick = false;
+      let i = 0;
+      while (i < text.length) {
+        const char = text[i];
+        const nextTwo = text.substr(i, 2);
+        const nextThree = text.substr(i, 4);
+        // Toggle quote states
+        if (char === "'" && !inDoubleQuote && !inBacktick) {
+          inSingleQuote = !inSingleQuote;
+          result.push(char);
+          i++;
+          continue;
+        }
+        if (char === '"' && !inSingleQuote && !inBacktick) {
+          inDoubleQuote = !inDoubleQuote;
+          result.push(char);
+          i++;
+          continue;
+        }
+        if (char === '`' && !inSingleQuote && !inDoubleQuote) {
+          inBacktick = !inBacktick;
+          result.push(char);
+          i++;
+          continue;
+        }
+        // If not inside any quotes, check for block comment start
+        if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
+          if (nextTwo === '/*') {
+            // Skip until end of block comment
+            i += 2;
+            while (i < text.length && text.substr(i, 2) !== '*/') {
+              i++;
+            }
+            i += 2; // Skip the closing */
+            continue;
+          }
+        }
+        // Otherwise, add the character to the result
+        result.push(char);
+        i++;
+      }
+      return result.join('');
     }
-
+    // Function to remove HTML/XML comments (<!-- -->) outside of quotes
     function removeHTMLComments(text) {
-      // Remove <!-- --> comments
-      return text.replace(/<!--[\s\S]*?-->/g, "");
+      const result = [];
+      let inSingleQuote = false;
+      let inDoubleQuote = false;
+      let inBacktick = false;
+      let i = 0;
+      while (i < text.length) {
+        const char = text[i];
+        const nextFour = text.substr(i, 4);
+        // Toggle quote states
+        if (char === "'" && !inDoubleQuote && !inBacktick) {
+          inSingleQuote = !inSingleQuote;
+          result.push(char);
+          i++;
+          continue;
+        }
+        if (char === '"' && !inSingleQuote && !inBacktick) {
+          inDoubleQuote = !inDoubleQuote;
+          result.push(char);
+          i++;
+          continue;
+        }
+        if (char === '`' && !inSingleQuote && !inDoubleQuote) {
+          inBacktick = !inBacktick;
+          result.push(char);
+          i++;
+          continue;
+        }
+        // If not inside any quotes, check for HTML comment start
+        if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
+          if (nextFour === '<!--') {
+            // Skip until end of HTML comment
+            i += 4;
+            while (i < text.length && text.substr(i, 3) !== '-->') {
+              i++;
+            }
+            i += 3; // Skip the closing -->
+            continue;
+          }
+        }
+        // Otherwise, add the character to the result
+        result.push(char);
+        i++;
+      }
+      return result.join('');
     }
   </script>
 </body>
