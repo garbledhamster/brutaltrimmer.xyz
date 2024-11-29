@@ -2,15 +2,46 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Brutalist Text Processor</title>
+  <title>Brutal Trimmer - Text Processor</title>
+
+  <!-- Meta Tags for SEO -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Brutal Trimmer is a powerful online text processing tool for developers, writers, and editors to clean and transform text efficiently.">
+  <meta name="keywords" content="text processor, text trimmer, online tool, remove comments, text cleaner, code formatter, text transformation, brutal trimmer">
+  <meta name="author" content="Brutal Trimmer">
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Brutal Trimmer - Online Text Processor">
+  <meta property="og:description" content="Clean and transform your text with Brutal Trimmer's powerful online tools.">
+  <meta property="og:image" content="https://brutaltrimmer.xyz/favicon.png">
+  <meta property="og:url" content="https://brutaltrimmer.xyz">
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Brutal Trimmer - Online Text Processor">
+  <meta name="twitter:description" content="Clean and transform your text with Brutal Trimmer's powerful online tools.">
+  <meta name="twitter:image" content="https://brutaltrimmer.xyz/favicon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="https://brutaltrimmer.xyz/favicon.png">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet">
+
+  <!-- Custom Styles -->
   <style>
     body {
       font-family: 'Fira Mono', monospace;
+      background-image: url('https://images.pexels.com/photos/965345/pexels-photo-965345.jpeg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      color: black;
     }
     /* Subtle animation for buttons */
     .btn {
@@ -23,27 +54,36 @@
     #mobileMenu.hidden {
       display: none;
     }
+    /* Background overlay for readability */
+    .bg-overlay {
+      background-color: rgba(255, 255, 255, 0.8);
+    }
   </style>
 </head>
-<body class="bg-white text-black">
-  <div class="container mx-auto p-4">
+<body>
+  <div class="container mx-auto p-4 bg-overlay">
+    <!-- Header -->
+    <header class="text-center mb-8">
+      <h1 class="text-4xl font-bold">Brutal Trimmer</h1>
+      <p class="text-xl">Efficient Text Processing Tool</p>
+    </header>
     <!-- Desktop Layout -->
     <div class="hidden md:flex">
       <!-- Input Textarea -->
-      <textarea id="inputText" class="w-1/3 h-screen p-4 border-2 border-black" placeholder="Enter text here..."></textarea>
+      <textarea id="inputText" class="w-1/3 h-screen p-4 border-2 border-black bg-white" placeholder="Enter text here..."></textarea>
       <!-- Buttons -->
       <div id="buttonMenu" class="w-1/3 flex flex-col items-center justify-center space-y-4 p-4">
         <!-- Buttons will be rendered here -->
       </div>
       <!-- Output Textarea -->
-      <textarea id="outputText" class="w-1/3 h-screen p-4 border-2 border-black" placeholder="Processed text will appear here..." readonly></textarea>
+      <textarea id="outputText" class="w-1/3 h-screen p-4 border-2 border-black bg-white" placeholder="Processed text will appear here..." readonly></textarea>
     </div>
     <!-- Mobile Layout -->
     <div class="md:hidden flex flex-col">
       <!-- Input Textarea -->
-      <textarea id="inputTextMobile" class="w-full h-48 p-4 border-2 border-black" placeholder="Enter text here..."></textarea>
+      <textarea id="inputTextMobile" class="w-full h-48 p-4 border-2 border-black bg-white" placeholder="Enter text here..."></textarea>
       <!-- Output Textarea -->
-      <textarea id="outputTextMobile" class="w-full h-48 p-4 border-2 border-black mt-4" placeholder="Processed text will appear here..." readonly></textarea>
+      <textarea id="outputTextMobile" class="w-full h-48 p-4 border-2 border-black mt-4 bg-white" placeholder="Processed text will appear here..." readonly></textarea>
     </div>
     <!-- Character Count -->
     <div id="charCount" class="mt-2 text-center"></div>
@@ -152,7 +192,7 @@
 
         // Update the output textarea and character count
         outputElement.value = outputText;
-        charCountElement.textContent = `Original: ${inputText.length} characters, Cleaned: ${inputText.length - outputText.length} characters, Output: ${outputText.length} characters`;
+        charCountElement.textContent = \`Original: \${inputText.length} characters, Cleaned: \${inputText.length - outputText.length} characters, Output: \${outputText.length} characters\`;
       } catch (error) {
         console.error("Error processing text:", error);
       }
