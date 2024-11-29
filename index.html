@@ -1,79 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Text Processor</title>
+  <title>Brutalist Text Processor</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Fira Mono', monospace;
+    }
+    /* Subtle animation for buttons */
+    .btn {
+      transition: background-color 0.2s ease-in-out;
+    }
+    .btn:hover {
+      background-color: #e5e7eb;
+    }
+    /* Mobile pop-up menu */
+    #mobileMenu.hidden {
+      display: none;
+    }
+  </style>
 </head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-F5XYNEJHS6"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-
-  function gtag() {
-    dataLayer.push(arguments);
-  }
-  gtag('js', new Date());
-  gtag('config', 'G-F5XYNEJHS6');
-</script>
-
-<body class="bg-white text-black m-0 font-mono">
-  <div id="container" class="flex flex-col items-center justify-center h-screen p-8 box-border">
-    <textarea id="inputText" placeholder="Enter text here..." class="w-4/5 h-2/5 m-2 p-2 border-2 border-black resize-none outline-none overflow-x-hidden whitespace-pre-wrap"></textarea>
-    <textarea id="outputText" placeholder="Processed text will appear here..." readonly class="w-4/5 h-2/5 m-2 p-2 border-2 border-black resize-none outline-none overflow-x-hidden whitespace-pre-wrap"></textarea>
-    <div id="controls" class="flex flex-col items-start justify-center text-left m-2 w-4/5">
-      <label class="m-0.5">
-        <input type="checkbox" id="specialCharacters" class="mr-2">
-        Multiple Special Character Reduction
-      </label>
-      <label class="m-0.5">
-        <input type="checkbox" id="wordmap" class="mr-2">
-        Wordmap
-      </label>
-      <label class="m-0.5 flex items-center">
-        <input type="checkbox" id="removeVowels" class="mr-2">
-        Remove Vowels
-        <label class="ml-2 flex items-center">
-          <input type="checkbox" id="removeVowelsCapitals" class="mr-2">
-          (include capitals)
-        </label>
-      </label>
-      <label class="m-0.5">
-        <input type="checkbox" id="removeSpaces" class="mr-2">
-        Remove Spaces
-      </label>
-      <label class="m-0.5">
-        <input type="checkbox" id="fillerWords" class="mr-2">
-        Filler Words
-      </label>
-      <label class="m-0.5">
-        <input type="checkbox" id="removeLineBreaks" class="mr-2">
-        Remove Line Breaks
-      </label>
-      <!-- Separate Checkboxes for Each Comment Type with Escaped Characters -->
-      <label class="m-0.5">
-        <input type="checkbox" id="removeDoubleSlashComments" class="mr-2">
-        Remove <code>//</code> Single-Line Comments
-      </label>
-      <label class="m-0.5">
-        <input type="checkbox" id="removeHashComments" class="mr-2">
-        Remove <code>#</code> Single-Line Comments
-      </label>
-      <label class="m-0.5">
-        <input type="checkbox" id="removeBlockComments" class="mr-2">
-        Remove <code>/* */</code> Block Comments
-      </label>
-      <label class="m-0.5">
-        <input type="checkbox" id="removeHTMLComments" class="mr-2">
-        Remove <code>&lt;!-- --&gt;</code> HTML/XML Comments
-      </label>
+<body class="bg-white text-black">
+  <div class="container mx-auto p-4">
+    <!-- Desktop Layout -->
+    <div class="hidden md:flex">
+      <!-- Input Textarea -->
+      <textarea id="inputText" class="w-1/3 h-screen p-4 border-2 border-black" placeholder="Enter text here..."></textarea>
+      <!-- Buttons -->
+      <div id="buttonMenu" class="w-1/3 flex flex-col items-center justify-center space-y-4 p-4">
+        <!-- Buttons will be rendered here -->
+      </div>
+      <!-- Output Textarea -->
+      <textarea id="outputText" class="w-1/3 h-screen p-4 border-2 border-black" placeholder="Processed text will appear here..." readonly></textarea>
     </div>
-    <div id="charCount" class="text-center font-mono w-full mt-4">
-      Original: 0 characters, Cleaned: 0 characters, Outputbox: 0 characters
+    <!-- Mobile Layout -->
+    <div class="md:hidden flex flex-col">
+      <!-- Input Textarea -->
+      <textarea id="inputTextMobile" class="w-full h-48 p-4 border-2 border-black" placeholder="Enter text here..."></textarea>
+      <!-- Output Textarea -->
+      <textarea id="outputTextMobile" class="w-full h-48 p-4 border-2 border-black mt-4" placeholder="Processed text will appear here..." readonly></textarea>
     </div>
+    <!-- Character Count -->
+    <div id="charCount" class="mt-2 text-center"></div>
   </div>
+  <!-- Mobile Menu Button -->
+  <button id="mobileMenuButton" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white p-4 rounded-full md:hidden">
+    Menu
+  </button>
+  <!-- Mobile Pop-up Menu -->
+  <div id="mobileMenu" class="fixed bottom-0 inset-x-0 bg-white border-t-2 border-black p-4 hidden md:hidden">
+    <!-- Buttons will be rendered here -->
+  </div>
+
+  <!-- JavaScript Code -->
   <script>
     // Debounce utility to limit the rate at which a function can fire.
     function debounce(func, delay) {
@@ -85,313 +69,190 @@
         debounceTimeout = setTimeout(() => func.apply(context, args), delay);
       };
     }
-    // Event handler with debouncing to optimize performance
-    const processTextDebounced = debounce(processText, 300); // 300ms delay
-    // Initialize event listeners on window load
-    window.onload = function() {
-      const inputElement = document.getElementById("inputText");
-      const outputElement = document.getElementById("outputText");
-      const charCountElement = document.getElementById("charCount");
-      if (inputElement && outputElement && charCountElement) {
-        inputElement.addEventListener("input", processTextDebounced);
-        // Attach change event listeners to all checkboxes to reprocess text on option change
-        const checkboxes = document.querySelectorAll("#controls input[type='checkbox']");
-        checkboxes.forEach(checkbox => {
-          checkbox.addEventListener("change", processTextDebounced);
-        });
+
+    // Transformation functions
+    function handleSpecialCharacters(text) {
+      const specialCharacters = ["-", "—", "&", "_", ",", ".", "!", "?", ":", ";", "(", ")", "[", "]", "{", "}", '"', "'"];
+      specialCharacters.forEach((char) => {
+        const regex = new RegExp(`[${escapeRegExp(char)}]+`, "g");
+        text = text.replace(regex, char);
+      });
+      return text;
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function applyWordMap(text) {
+      const wordMap = {
+        about: "abt", after: "aftr", algorithm: "algo", all: "al", before: "b4",
+        development: "dev", example: "ex", information: "info", organization: "org",
+        system: "sys", technology: "tech", without: "w/o"
+      };
+      const regex = new RegExp(`\\b(${Object.keys(wordMap).join("|")})\\b`, "gi");
+      return text.replace(regex, (matched) => wordMap[matched.toLowerCase()] || matched);
+    }
+
+    function removeVowels(text, removeCapitals) {
+      if (removeCapitals) {
+        return text.replace(/[aeiou]/gi, "");
       } else {
-        console.error("One or more required DOM elements are missing.");
+        return text.replace(/[aeiou]/g, "");
       }
-    };
-    // Main text processing function with comprehensive error handling
+    }
+
+    function removeSpaces(text) {
+      return text.replace(/\u0020/g, "");
+    }
+
+    function removeLineBreaks(text) {
+      return text.replace(/\r?\n|\r/g, "");
+    }
+
+    function removeFillerWords(text) {
+      const fillerWords = ["basically", "actually", "honestly", "literally", "just", "really", "very", "so"];
+      const regex = new RegExp(`\\b(${fillerWords.join("|")})\\b`, "gi");
+      return text.replace(regex, "").replace(/\s{2,}/g, " ").trim();
+    }
+
+    function removeComments(text, type) {
+      if (type === "//") {
+        return text.replace(/\/\/.*$/gm, "");
+      } else if (type === "#") {
+        return text.replace(/#.*$/gm, "");
+      }
+      return text;
+    }
+
+    function removeBlockComments(text) {
+      return text.replace(/\/\*[\s\S]*?\*\//g, "");
+    }
+
+    function removeHTMLComments(text) {
+      return text.replace(/<!--[\s\S]*?-->/g, "");
+    }
+
+    // Main text processing function
     function processText() {
       try {
-        const inputElement = document.getElementById("inputText");
-        const outputElement = document.getElementById("outputText");
+        const inputElement = document.getElementById('inputText') || document.getElementById('inputTextMobile');
+        const outputElement = document.getElementById('outputText') || document.getElementById('outputTextMobile');
         const charCountElement = document.getElementById("charCount");
         if (!inputElement || !outputElement || !charCountElement) {
           throw new Error("Required DOM elements are missing.");
         }
         const inputText = inputElement.value;
         let outputText = inputText;
+
         // Apply transformations based on selected options
-        if (document.getElementById("specialCharacters").checked) {
-          if (typeof handleSpecialCharacters === "function") {
-            outputText = handleSpecialCharacters(outputText);
-          } else {
-            console.warn("handleSpecialCharacters function is not defined.");
-          }
-        }
-        if (document.getElementById("wordmap").checked) {
-          if (typeof applyWordMap === "function") {
-            outputText = applyWordMap(outputText);
-          } else {
-            console.warn("applyWordMap function is not defined.");
-          }
-        }
-        if (document.getElementById("removeVowels").checked) {
-          if (document.getElementById("removeVowelsCapitals").checked) {
-            outputText = outputText.replace(/[aeiou]/gi, "");
-          } else {
-            outputText = outputText.replace(/[aeiou]/g, "");
-          }
-        }
-        if (document.getElementById("removeSpaces").checked) {
-          outputText = outputText.replace(/\u0020/g, "");
-        }
-        if (document.getElementById("removeLineBreaks").checked) {
-          outputText = outputText.replace(/\r?\n|\r/g, "");
-        }
-        if (document.getElementById("fillerWords").checked) {
-          if (typeof removeFillerWords === "function") {
-            outputText = removeFillerWords(outputText);
-          } else {
-            console.warn("removeFillerWords function is not defined.");
-          }
-        }
-        // Remove Comments Based on Separate Checkboxes
-        if (document.getElementById("removeDoubleSlashComments").checked) {
-          outputText = removeComments(outputText, "//");
-        }
-        if (document.getElementById("removeHashComments").checked) {
-          outputText = removeComments(outputText, "#");
-        }
-        if (document.getElementById("removeBlockComments").checked) {
-          outputText = removeBlockComments(outputText);
-        }
-        if (document.getElementById("removeHTMLComments").checked) {
-          outputText = removeHTMLComments(outputText);
-        }
+        transformations.forEach(transform => {
+          outputText = transform.action(outputText);
+        });
+
         // Update the output textarea and character count
         outputElement.value = outputText;
-        charCountElement.textContent = `Original: ${inputText.length} characters, Cleaned: ${inputText.length - outputText.length} characters, Outputbox: ${outputText.length} characters`;
+        charCountElement.textContent = `Original: ${inputText.length} characters, Cleaned: ${inputText.length - outputText.length} characters, Output: ${outputText.length} characters`;
       } catch (error) {
         console.error("Error processing text:", error);
-        const outputElement = document.getElementById("outputText");
-        const charCountElement = document.getElementById("charCount");
-        if (outputElement && charCountElement) {
-          outputElement.value = "An error occurred while processing the text.";
-          charCountElement.textContent = `Original: ${document.getElementById("inputText")?.value.length || 0} characters, Cleaned: N/A, Outputbox: N/A`;
-        }
       }
     }
-    // Function to handle multiple special character reductions
-    function handleSpecialCharacters(text) {
-      const specialCharacters = [
-        "-", "—", "&", "_", ",", ".", "!", "?", ":", ";",
-        "(", ")", "[", "]", "{", "}", '"', "'"
+
+    // Transformation functions array
+    let transformations = [];
+
+    // Event listeners for buttons
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize buttons
+      const buttonsData = [
+        { id: 'specialCharacters', label: 'Handle Special Characters', action: handleSpecialCharacters },
+        { id: 'wordmap', label: 'Apply Word Map', action: applyWordMap },
+        { id: 'removeVowels', label: 'Remove Vowels', action: removeVowelsWrapper },
+        { id: 'removeSpaces', label: 'Remove Spaces', action: removeSpaces },
+        { id: 'removeLineBreaks', label: 'Remove Line Breaks', action: removeLineBreaks },
+        { id: 'fillerWords', label: 'Remove Filler Words', action: removeFillerWords },
+        { id: 'removeDoubleSlashComments', label: 'Remove // Comments', action: (text) => removeComments(text, "//") },
+        { id: 'removeHashComments', label: 'Remove # Comments', action: (text) => removeComments(text, "#") },
+        { id: 'removeBlockComments', label: 'Remove Block Comments', action: removeBlockComments },
+        { id: 'removeHTMLComments', label: 'Remove HTML Comments', action: removeHTMLComments },
       ];
-      specialCharacters.forEach((char) => {
-        // Escape special regex characters
-        const escapedChar = escapeRegExp(char);
-        const regex = new RegExp(`[${escapedChar}]+`, "g");
-        text = text.replace(regex, char);
+
+      // Function to wrap removeVowels with option to remove capitals
+      function removeVowelsWrapper(text) {
+        const removeVowelsCapitals = document.getElementById('removeVowelsCapitals').checked;
+        return removeVowels(text, removeVowelsCapitals);
+      }
+
+      // Function to create buttons
+      function createButtons(container) {
+        buttonsData.forEach(buttonData => {
+          const btn = document.createElement('button');
+          btn.id = buttonData.id;
+          btn.textContent = buttonData.label;
+          btn.className = 'btn bg-white border-2 border-black p-2 w-full';
+          btn.addEventListener('click', () => {
+            const index = transformations.findIndex(t => t.id === buttonData.id);
+            if (index >= 0) {
+              transformations.splice(index, 1);
+              btn.classList.remove('bg-black', 'text-white');
+              btn.classList.add('bg-white', 'text-black');
+            } else {
+              transformations.push(buttonData);
+              btn.classList.remove('bg-white', 'text-black');
+              btn.classList.add('bg-black', 'text-white');
+            }
+            processText();
+          });
+          container.appendChild(btn);
+
+          // For 'Remove Vowels', add checkbox
+          if (buttonData.id === 'removeVowels') {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = 'removeVowelsCapitals';
+            checkbox.className = 'ml-2';
+            const label = document.createElement('label');
+            label.textContent = 'Remove Capitals';
+            label.htmlFor = 'removeVowelsCapitals';
+            label.className = 'ml-1 text-sm';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-center mb-2';
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
+
+            // Add event listener to checkbox to re-process text when changed
+            checkbox.addEventListener('change', processText);
+          }
+        });
+      }
+
+      // Render buttons in both desktop and mobile containers
+      const desktopButtonContainer = document.getElementById('buttonMenu');
+      const mobileButtonContainer = document.getElementById('mobileMenu');
+
+      if (desktopButtonContainer) {
+        createButtons(desktopButtonContainer);
+      }
+      if (mobileButtonContainer) {
+        createButtons(mobileButtonContainer);
+      }
+
+      // Event listener for input changes
+      const inputElements = document.querySelectorAll('#inputText, #inputTextMobile');
+      inputElements.forEach(inputElement => {
+        inputElement.addEventListener('input', debounce(processText, 300));
       });
-      return text;
-    }
-    // Utility function to escape special regex characters
-    function escapeRegExp(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-    // Function to apply word mapping for abbreviations
-    function applyWordMap(text) {
-      const wordMap = {
-        about: "abt",
-        after: "aftr",
-        algorithm: "algo",
-        all: "al",
-        before: "b4",
-        between: "btwn",
-        communication: "comm",
-        development: "dev",
-        example: "ex",
-        information: "info",
-        international: "intl",
-        organization: "org",
-        people: "ppl",
-        problem: "prblm",
-        professional: "prof",
-        system: "sys",
-        technology: "tech",
-        understand: "undrstd",
-        without: "w/o",
-        one: "1",
-        two: "2",
-        three: "3",
-        four: "4",
-        five: "5",
-        six: "6",
-        seven: "7",
-        eight: "8",
-        nine: "9",
-        zero: "0"
-      };
-      // Use word boundaries to ensure whole words are matched
-      const regex = new RegExp(`\\b(${Object.keys(wordMap).join("|")})\\b`, "gi");
-      return text.replace(regex, (matched) => wordMap[matched.toLowerCase()] || matched);
-    }
-    // Function to remove filler words from text
-    function removeFillerWords(text) {
-      const fillerWords = [
-        "basically", "actually", "honestly", "literally", "essentially",
-        "frankly", "definitely", "probably", "maybe", "like", "just",
-        "really", "very", "so", "quite", "somewhat", "rather", "almost",
-        "approximately", "around", "nearly", "practically", "virtually",
-        "sort of", "kind of", "more or less", "mostly",
-      ];
-      // Use word boundaries and case-insensitive matching
-      const regex = new RegExp(`\\b(${fillerWords.join("|")})\\b`, "gi");
-      return text.replace(regex, "").replace(/\s{2,}/g, " ").trim();
-    }
-    // Function to remove comments outside of quotes
-    function removeComments(text, type) {
-      const result = [];
-      let inSingleQuote = false;
-      let inDoubleQuote = false;
-      let inBacktick = false;
-      let i = 0;
-      while (i < text.length) {
-        const char = text[i];
-        const nextTwo = text.substr(i, 2);
-        const nextHash = text[i] === '#' ? '#' : null;
-        // Toggle quote states
-        if (char === "'" && !inDoubleQuote && !inBacktick) {
-          inSingleQuote = !inSingleQuote;
-          result.push(char);
-          i++;
-          continue;
-        }
-        if (char === '"' && !inSingleQuote && !inBacktick) {
-          inDoubleQuote = !inDoubleQuote;
-          result.push(char);
-          i++;
-          continue;
-        }
-        if (char === '`' && !inSingleQuote && !inDoubleQuote) {
-          inBacktick = !inBacktick;
-          result.push(char);
-          i++;
-          continue;
-        }
-        // If not inside any quotes, check for comment patterns
-        if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
-          if (type === "//" && nextTwo === "//") {
-            // Skip until end of line
-            while (i < text.length && text[i] !== '\n') {
-              i++;
-            }
-            continue;
-          }
-          if (type === "#" && char === '#') {
-            // Skip until end of line
-            while (i < text.length && text[i] !== '\n') {
-              i++;
-            }
-            continue;
-          }
-        }
-        // Otherwise, add the character to the result
-        result.push(char);
-        i++;
+
+      // Mobile menu toggle
+      const mobileMenuButton = document.getElementById('mobileMenuButton');
+      const mobileMenu = document.getElementById('mobileMenu');
+      if (mobileMenuButton) {
+        mobileMenuButton.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+        });
       }
-      return result.join('');
-    }
-    // Function to remove block comments (/* */) outside of quotes
-    function removeBlockComments(text) {
-      const result = [];
-      let inSingleQuote = false;
-      let inDoubleQuote = false;
-      let inBacktick = false;
-      let i = 0;
-      while (i < text.length) {
-        const char = text[i];
-        const nextTwo = text.substr(i, 2);
-        const nextThree = text.substr(i, 4);
-        // Toggle quote states
-        if (char === "'" && !inDoubleQuote && !inBacktick) {
-          inSingleQuote = !inSingleQuote;
-          result.push(char);
-          i++;
-          continue;
-        }
-        if (char === '"' && !inSingleQuote && !inBacktick) {
-          inDoubleQuote = !inDoubleQuote;
-          result.push(char);
-          i++;
-          continue;
-        }
-        if (char === '`' && !inSingleQuote && !inDoubleQuote) {
-          inBacktick = !inBacktick;
-          result.push(char);
-          i++;
-          continue;
-        }
-        // If not inside any quotes, check for block comment start
-        if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
-          if (nextTwo === '/*') {
-            // Skip until end of block comment
-            i += 2;
-            while (i < text.length && text.substr(i, 2) !== '*/') {
-              i++;
-            }
-            i += 2; // Skip the closing */
-            continue;
-          }
-        }
-        // Otherwise, add the character to the result
-        result.push(char);
-        i++;
-      }
-      return result.join('');
-    }
-    // Function to remove HTML/XML comments (<!-- -->) outside of quotes
-    function removeHTMLComments(text) {
-      const result = [];
-      let inSingleQuote = false;
-      let inDoubleQuote = false;
-      let inBacktick = false;
-      let i = 0;
-      while (i < text.length) {
-        const char = text[i];
-        const nextFour = text.substr(i, 4);
-        // Toggle quote states
-        if (char === "'" && !inDoubleQuote && !inBacktick) {
-          inSingleQuote = !inSingleQuote;
-          result.push(char);
-          i++;
-          continue;
-        }
-        if (char === '"' && !inSingleQuote && !inBacktick) {
-          inDoubleQuote = !inDoubleQuote;
-          result.push(char);
-          i++;
-          continue;
-        }
-        if (char === '`' && !inSingleQuote && !inDoubleQuote) {
-          inBacktick = !inBacktick;
-          result.push(char);
-          i++;
-          continue;
-        }
-        // If not inside any quotes, check for HTML comment start
-        if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
-          if (nextFour === '<!--') {
-            // Skip until end of HTML comment
-            i += 4;
-            while (i < text.length && text.substr(i, 3) !== '-->') {
-              i++;
-            }
-            i += 3; // Skip the closing -->
-            continue;
-          }
-        }
-        // Otherwise, add the character to the result
-        result.push(char);
-        i++;
-      }
-      return result.join('');
-    }
+    });
   </script>
 </body>
-
 </html>
