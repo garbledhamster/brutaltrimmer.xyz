@@ -155,47 +155,47 @@
     <div class="grid grid-cols-2 md:grid-cols-1 gap-2">
       <button 
         class="w-full px-4 py-2 border border-blue-500 bg-blue-100 text-blue-700" 
-        title="🗑️ Removes all empty lines, leaving only lines that contain text." 
+        title="🗑️ Removes all empty lines." 
         onclick="notifyAndExecute('removeEmptyLines')">Remove Empty Lines</button>
       
       <button 
         class="w-full px-4 py-2 border border-red-500 bg-red-100 text-red-700" 
-        title="💥 Removes all line breaks, merging the text into one continuous line." 
+        title="💥 Removes all line breaks." 
         onclick="notifyAndExecute('removeLineBreaks')">Remove Line Breaks</button>
       
       <button 
         class="w-full px-4 py-2 border border-yellow-500 bg-yellow-100 text-yellow-700" 
-        title="🧹 Removes all HTML comments (<!-- ... -->) from the text." 
+        title="🧹 Removes all HTML comments." 
         onclick="notifyAndExecute('removeHTMLComments')">Remove HTML Comments</button>
       
       <button 
         class="w-full px-4 py-2 border border-green-500 bg-green-100 text-green-700" 
-        title="❌ Removes every space character from the text, leaving no spaces." 
+        title="❌ Removes every space character." 
         onclick="notifyAndExecute('removeSpaces')">Remove Spaces</button>
       
       <button 
         class="w-full px-4 py-2 border border-purple-500 bg-purple-100 text-purple-700" 
-        title="📝 Removes JavaScript comments (// ...), leaving code with no inline commentary." 
+        title="📝 Removes JS comments." 
         onclick="notifyAndExecute('removeJSComments')">Remove JS Comments</button>
       
       <button 
         class="w-full px-4 py-2 border border-pink-500 bg-pink-100 text-pink-700" 
-        title="🔧 Removes PowerShell comments (# ...), leaving code with no inline commentary." 
+        title="🔧 Removes PowerShell comments." 
         onclick="notifyAndExecute('removePSComments')">Remove PS Comments</button>
       
       <button 
         class="w-full px-4 py-2 border border-gray-500 bg-gray-100 text-gray-700" 
-        title="🔄 Restores the output to match the original input, clearing all applied changes." 
+        title="🔄 Restores original text." 
         onclick="notifyAndExecute('clearChanges')">Clear Changes</button>
       
       <button 
         class="w-full px-4 py-2 border border-blue-500 bg-blue-100 text-blue-700" 
-        title="🚀 Replaces multiple spaces in a row with a single space, tidying up the spacing." 
+        title="🚀 Replaces multiple spaces with one." 
         onclick="notifyAndExecute('removeExtraSpaces')">Remove Extra Spaces</button>
       
       <button 
         class="w-full px-4 py-2 border border-red-500 bg-red-100 text-red-700" 
-        title="🧽 Cleans and refines text by removing consecutive duplicates and ensuring proper spacing around punctuation." 
+        title="🧽 Cleans and refines text." 
         onclick="notifyAndExecute('cleanupText')">Cleanup Text</button>
     </div>
     <div class="flex-grow p-4 resize-none output-container">
@@ -210,184 +210,13 @@
     <p><a href="https://joerice.me/" class="text-blue-500 hover:underline" target="_blank">Check out my other work</a></p>
   </footer>
 
+  <!-- Load the aggregator script as a module, which imports all functions -->
+  <script type="module" src="data/functions.js"></script>
   <script>
-    let initialText = '';
-    let historyStack = []; // To store the history of states for undo
-    const MAX_HISTORY = 10;
-
-    const messages = {
-      removeEmptyLines: "Hah! Removed those lazy empty lines. They won't waste your space now.",
-      removeLineBreaks: "Line breaks? Gone. We like continuity, don't we?",
-      removeHTMLComments: "Shhh... HTML comments have been silenced.",
-      removeSpaces: "Spaces are so overrated. Removed 'em!",
-      removeJSComments: "// Comments? More like // Gone! JS comments removed.",
-      removePSComments: "# No more whispers in the code. PowerShell comments removed.",
-      clearChanges: "Behold! The original text has returned, unscathed.",
-      removeExtraSpaces: "Multiple spaces collapsed into a single, efficient space. Much cleaner.",
-      cleanupText: "Cleaned up! No duplicates, punctuation spaced properly. It's squeaky clean now."
-    };
-
-    function updateStats() {
-      const inputText = document.getElementById('inputText').value;
-      const outputText = document.getElementById('outputText').value;
-
-      const sourceCharCount = inputText.length;
-      const destinationCharCount = outputText.length;
-      const charsDeleted = initialText.length - destinationCharCount;
-      const linesRemoved = initialText.split('\n').length - outputText.split('\n').length;
-      const spacesRemoved = (initialText.match(/ /g) || []).length - (outputText.match(/ /g) || []).length;
-
-      document.getElementById('sourceCount').innerText = sourceCharCount;
-      document.getElementById('destinationCount').innerText = destinationCharCount;
-      document.getElementById('deletedCount').innerText = charsDeleted;
-      document.getElementById('linesRemoved').innerText = linesRemoved;
-      document.getElementById('spacesRemoved').innerText = spacesRemoved;
-    }
-
-    function saveHistory() {
-      const currentState = {
-        input: document.getElementById('inputText').value,
-        output: document.getElementById('outputText').value
-      };
-      historyStack.push(currentState);
-      // Limit history size
-      if (historyStack.length > MAX_HISTORY) {
-        historyStack.shift();
-      }
-    }
-
-    function processText(transformFn) {
-      // Save the current state before transformation for undo
-      saveHistory();
-
-      const inputText = document.getElementById('inputText').value;
-      initialText = initialText || inputText; // Store original text once
-      const result = transformFn(inputText);
-      document.getElementById('outputText').value = result;
-      updateStats();
-    }
-
-    function removeEmptyLines() {
-      processText(text => text.split('\n').filter(line => line.trim() !== '').join('\n'));
-    }
-
-    function removeLineBreaks() {
-      processText(text => text.replace(/(\r\n|\n|\r)/gm, ''));
-    }
-
-    function removeHTMLComments() {
-      processText(text => text.replace(/<!--[\s\S]*?-->/g, ''));
-    }
-
-    function removeSpaces() {
-      processText(text => text.replace(/ /g, ''));
-    }
-
-    function removeJSComments() {
-      processText(text => {
-        return text
-          .split('\n')
-          .map(line => {
-            const commentIndex = line.indexOf('//');
-            if (commentIndex !== -1 && !line.trim().startsWith('//')) {
-              return line.slice(0, commentIndex).trimEnd();
-            }
-            return line.trim().startsWith('//') ? '' : line;
-          })
-          .join('\n');
-      });
-    }
-
-    function removePSComments() {
-      processText(text => {
-        return text
-          .split('\n')
-          .map(line => {
-            const commentIndex = line.indexOf('#');
-            if (commentIndex !== -1 && !line.trim().startsWith('#')) {
-              return line.slice(0, commentIndex).trimEnd();
-            }
-            return line.trim().startsWith('#') ? '' : line;
-          })
-          .join('\n');
-      });
-    }
-
-    function removeExtraSpaces() {
-      processText(text => text.replace(/\s{2,}/g, ' '));
-    }
-
-    function clearChanges() {
-      // Save state before clearing
-      saveHistory();
-
-      const inputText = document.getElementById('inputText').value;
-      initialText = ''; // Reset initial text
-      document.getElementById('outputText').value = inputText;
-      updateStats();
-    }
-
-    function cleanupText() {
-      processText(text => {
-        // Define punctuation characters
-        const punctuation = `[.,!?;:'"()]`; 
-
-        // Step 1: Remove consecutive duplicates from all characters.
-        text = text.replace(/(.)\1+/g, '$1');
-
-        // Step 2: Ensure proper spacing around punctuation.
-        // Remove extra spaces before punctuation
-        text = text.replace(new RegExp(`\\s+(${punctuation})`, 'g'), '$1');
-
-        // Add a space after punctuation if missing (and not end of line)
-        text = text.replace(new RegExp(`(${punctuation})([^\\s${punctuation}])`, 'g'), '$1 $2');
-
-        return text.trim();
-      });
-    }
-
-    function notifyAndExecute(action) {
-      const notificationBox = document.getElementById('notificationBox');
-      let message = messages[action] || "Action completed.";
-      notificationBox.textContent = message;
-      window[action]();
-    }
-
-    function sendResultToSource() {
-      // Save state before sending result back
-      saveHistory();
-
-      const outputText = document.getElementById('outputText').value;
-      document.getElementById('inputText').value = outputText;
-      initialText = outputText; // Update initialText to match new source
-      updateStats();
-
-      const notificationBox = document.getElementById('notificationBox');
-      notificationBox.textContent = "Transferred result back to source. Let's go for another round!";
-    }
-
-    function undo() {
-      if (historyStack.length > 0) {
-        const lastState = historyStack.pop();
-        document.getElementById('inputText').value = lastState.input;
-        document.getElementById('outputText').value = lastState.output;
-        initialText = lastState.input; 
-        updateStats();
-
-        const notificationBox = document.getElementById('notificationBox');
-        notificationBox.textContent = "Undo performed. Step back in time!";
-      } else {
-        const notificationBox = document.getElementById('notificationBox');
-        notificationBox.textContent = "No more undos available.";
-      }
-    }
-
-    // Initialize feather icons
-    window.onload = function() {
+    window.addEventListener('load', () => {
       feather.replace();
-      // On initial load, store the initial state so we can revert at least once
       saveHistory();
-    };
+    });
   </script>
 </body>
 </html>
