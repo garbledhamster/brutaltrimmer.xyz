@@ -68,7 +68,7 @@
       font-size: 0.9rem;
     }
 
-    .output-container {
+    .output-container, .input-container {
       position: relative;
     }
 
@@ -94,6 +94,36 @@
     #sendResultBtn:hover {
       background-color: #222;
     }
+
+    /* Undo button styles similar to sendResultBtn */
+    #undoBtn {
+      position: absolute;
+      bottom: 20px; 
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #000;
+      color: #0f0;
+      border: 2px solid #333;
+      cursor: pointer;
+      font-family: Consolas, 'Courier New', Courier, monospace;
+      font-size: 0.8rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #undoBtn:hover {
+      background-color: #222;
+    }
+
+    /* Ensure textarea expands properly on mobile */
+    textarea {
+      width: 100%;
+      height: 100%;
+    }
   </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -115,7 +145,13 @@
     </div>
   </div>
   <main class="flex-grow flex flex-col md:flex-row p-4 gap-4">
-    <textarea id="inputText" class="flex-grow p-4 resize-none" placeholder="Enter text here..." oninput="updateStats()"></textarea>
+    <div class="input-container flex-grow">
+      <textarea id="inputText" class="flex-grow p-4 resize-none" placeholder="Enter text here..." oninput="updateStats()"></textarea>
+      <!-- Undo Button placed under the input box -->
+      <button id="undoBtn" onclick="undo()" title="Undo last change">
+        <i data-feather="rotate-ccw"></i>
+      </button>
+    </div>
     <div class="grid grid-cols-2 md:grid-cols-1 gap-2">
       <button 
         class="w-full px-4 py-2 border border-blue-500 bg-blue-100 text-blue-700" 
@@ -176,6 +212,8 @@
 
   <script>
     let initialText = '';
+    let historyStack = []; // To store the history of states for undo
+    const MAX_HISTORY = 10;
 
     const messages = {
       removeEmptyLines: "Hah! Removed those lazy empty lines. They won't waste your space now.",
@@ -206,9 +244,24 @@
       document.getElementById('spacesRemoved').innerText = spacesRemoved;
     }
 
+    function saveHistory() {
+      const currentState = {
+        input: document.getElementById('inputText').value,
+        output: document.getElementById('outputText').value
+      };
+      historyStack.push(currentState);
+      // Limit history size
+      if (historyStack.length > MAX_HISTORY) {
+        historyStack.shift();
+      }
+    }
+
     function processText(transformFn) {
+      // Save the current state before transformation for undo
+      saveHistory();
+
       const inputText = document.getElementById('inputText').value;
-      initialText = initialText || inputText; // Store original text
+      initialText = initialText || inputText; // Store original text once
       const result = transformFn(inputText);
       document.getElementById('outputText').value = result;
       updateStats();
@@ -265,6 +318,9 @@
     }
 
     function clearChanges() {
+      // Save state before clearing
+      saveHistory();
+
       const inputText = document.getElementById('inputText').value;
       initialText = ''; // Reset initial text
       document.getElementById('outputText').value = inputText;
@@ -298,6 +354,9 @@
     }
 
     function sendResultToSource() {
+      // Save state before sending result back
+      saveHistory();
+
       const outputText = document.getElementById('outputText').value;
       document.getElementById('inputText').value = outputText;
       initialText = outputText; // Update initialText to match new source
@@ -307,9 +366,27 @@
       notificationBox.textContent = "Transferred result back to source. Let's go for another round!";
     }
 
+    function undo() {
+      if (historyStack.length > 0) {
+        const lastState = historyStack.pop();
+        document.getElementById('inputText').value = lastState.input;
+        document.getElementById('outputText').value = lastState.output;
+        initialText = lastState.input; 
+        updateStats();
+
+        const notificationBox = document.getElementById('notificationBox');
+        notificationBox.textContent = "Undo performed. Step back in time!";
+      } else {
+        const notificationBox = document.getElementById('notificationBox');
+        notificationBox.textContent = "No more undos available.";
+      }
+    }
+
     // Initialize feather icons
     window.onload = function() {
       feather.replace();
+      // On initial load, store the initial state so we can revert at least once
+      saveHistory();
     };
   </script>
 </body>
